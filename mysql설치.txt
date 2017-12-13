@@ -1,0 +1,16 @@
+1. 임시 비밀번호로 접속하기
+    $ ./mysql -uroot -p
+    임시비밀번호 입력
+
+2. root 게정의 비밀번호 변경하기
+    mysql> set password = password('비밀번호');
+    
+3. 사용자 추가하기
+    mysql> CREATE USER '사용자아이디'@'localhost' IDENTIFIED BY '비밀번호';
+    mysql> GRANT ALL PRIVILEGES ON *.* TO '사용자아이디'@'localhost' WITH GRANT OPTION;
+    
+    mysql> CREATE USER '사용자아이디'@'%' IDENTIFIED BY '비밀번호';
+    mysql> GRANT ALL PRIVILEGES ON *.* TO '사용자아이디'@'%' WITH GRANT OPTION;
+
+3. 변경사항 적용하기
+    mysql> flush privileges;

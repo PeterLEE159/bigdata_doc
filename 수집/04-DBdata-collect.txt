@@ -1,0 +1,58 @@
+﻿관계형 데이터베이스 수집
+	- 회상의 주요 데이터는 관계형 데이터베이스 관리 시스템과 같은 구조적인 데이터 저장소에 저장된다.
+	
+Sqoop
+	- 아파치 스쿱은 구조화된 데이터 저장소에서 데이터를 추출해서 하둡으로 보내 처리할 수 있도록 해주는 오픈소스 도구다.
+	- 관계형 데이터베이스의 데이터를 HBase로 옮기는 데 스쿱을 사용할 수 있다.
+	- 분석 파이프라인을 거쳐 최종 산출물이 나오면 스쿱은 이 산출물을 다시 데이터 저장소로 보내 다른 사용자가 사용할 수 있도록 해준다.
+	- 스쿱은 대용량 데이터 전송 기능이 있는 외부 저장 시스템에 데이터를 임포트하고 익스포트할는 확장 프레임워크다.
+	- 스쿱은 MySQL, PostgreSQL, 오라클, SQL 서버, DB2 등 다양한 관계형 데이터베이스에서 작동하는 커넥터를 제공한다.
+	- 스쿱은 하둡에서 제공하는 데이터베이스 연결용 MapInputFormater다.
+		- DBInputFormater
+			- JDBC와 인터페이스
+			- SQL을 통해 테이블에서 Row 추출
+			- DB, 테이블, 질의를 인자로 입력
+		- DBWritable
+			- 데이터베이스에 Row를 기록
+			- JDBC이 ResultSet을 읽어서 필드로 변환
+	- 설치
+		- 다운로드
+			$ wget http://apache.mirror.cdnetworks.com/sqoop/1.4.6/sqoop-1.4.6.bin__hadoop-1.0.0.tar.gz
+		- 환경변수 등록
+			$ vi ~/.bashrc
+			export SQPOOP_HOME=/usr/local/hadoop-eco/sqoop
+	- 실행
+		- $ sqoop import						// 하둡으로 데이터를 가져올 때는 import를 사용한다.
+		    --connect jdbc:mysql://localhost:3306/데이터베이스명	// map이 접근할 데이터베이스 정보를 입력한다.
+		    --table 테이블명 						// 하둡으로 복사할 테이블을 지정한다.
+		    --username 계정명 --password 비밀번호			// 계정정보를 지정한다.
+		    -m 1							// 데이터베이스를 하둡에 복사할 때 사용할 맵퍼(mapper)개수를 지정한다.
+		    --target-dir 하둡저장경로					// 가져온 데이터베이스 내용을 하둡에 저장할 위치를 지정한다.
+
+
+	- 실행예
+		$ ./sqoop import --connect jdbc:mysql://localhost:3306/hadoopguide 
+		  --table widgets --username hduser --password zxcv1234 -m 1 --target-dir widgets
+
+	- 스쿱과 데이터베이스의 상호작용
+		1. 스쿱은 JDBC API를 이용해서 임포트 대상 테이블을 검사하고, 모든 컬럼으 목록과 SQL 데이터 타입을 추출한다.
+		2. 테이블에서 추출한 레코드에 적용할 테이블 특화 클래스를 생성한다.
+		   테이블 특화 클래스는 추출한 레코드의 각 컬럼을 가져오는 메소드가 포함되어 있다.
+		   테이블 특화 클래스는 DBWritable과 Writable 인터페이스를 구현한 클래스다.
+		   public void readFields(ResultSet __dbResults) throws SQLException
+			ResultSet 데이터의 한 행에 있는 컬럼을 읽어서 테이블특화 객체의 필드값을 채우는 메소드다.
+		   public void write(PreparedStatement __dbStmt) throws SQLException 		
+			대상 테이블에 새로운 행을 추가하는 메소드다.
+		3. 대상 테이블을 대상으로 import, export 작업을 수행한다.
+	
+	- 부하 분산
+		- 테이블의 데이터를 읽을 때 쿼리를 다순의 노드에 분산시키면 임포트 성능을 높일 수 있다.
+		- 쿼리를 분리하기 위해서는 분할 기분 컬럼이 중요하다.
+		- 스쿱은 테이블의 메타 정보를 기반으로 분할에 적합할 컬럼의 예측한다.
+		- 테이블에 기본키가 존재하면 이 컬럼을 분할 기준 컬럼으로 사용한다.
+		- 기본키 컬럼의 최대값과 최소값을 조회한 후 태스크 수를 기준으로 각 맵 태스크가 수행할 쿼리를 정한다.
+		- 기본키 컬럼의 값이 균등하게 분포되지 않았다면 특정 분할 컬럼을 --split-by 인자로 지정할 수 있다.
+		  (-m 1로 지정되어 있는 경우 분할과정은 일어나지 않는다.)
+	
+			
+		

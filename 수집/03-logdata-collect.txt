@@ -1,0 +1,93 @@
+﻿로그데이터 수집
+	- 로그데이터 수집
+		- 로그데이터는 빅데이터 관련 기술의 가장 큰 혜택을 받은 데이터다.
+		- 로그데이터 수집기술 선택시 확장성, 안정성, 유연성, 주기성 등을 고려해서 선택해야 한다.
+
+	- 로그데이터 수집기술
+		- Flume
+			- 대용량 로그 데이터를 안정성, 가용성을 바탕으로 효율적으로 수집
+			- 다양한 소스로부터 데이터를 수집해서 다양한 방식으로 전송할 수 있다.
+			- 아키텍처가 단순하고 유연하다.
+			- 확장가능한 데이터 모델을 제공한다.
+			- 실시간 분석 애플리케이션을 쉽게 개발할 수 있다.
+			- 국내의 빅데이터 솔루션의 수집부분에서 많이 채택되고 있다.			
+		- Scribe
+			- 수많은 서버로부터 실시간으로 스트리밍 로그 수집
+			- 클라이언트/서버의 타입에 상관없이 다양한 방식으로 로그를 수집할 수 있다.
+			- 페이스북에서 개발했다.
+		- Chukwa
+			- 분산 서버에서 로그 데이터를 수집/저장/분석하기 위한 솔루션
+			- 수집된 로그파일을 hdfs에 저장한다.
+			- 실시간 분석이 가능하다.
+			- 하둡에 의존적이다.
+		
+Flume
+	- 빅데이터 플랫폼에서 로그를 전달하기 위해 개발되었다.
+	- 하둡에 직접 데이터를 저장할 수 있고, 여러 가지 경로와 장애대응 기능을 가지고 있다.
+	- 대규모의 로그 데이터를 처리하기에 매우 편리하다.
+	- 아키텍처
+		----------         --------           --------          --------
+		| 컨피그 | ------> | 소스 |  ------>  | 채널 |  ------> | 싱크 |
+		----------         --------           --------          --------
+		- 컨피그
+			- Flume의 작업 파일을 읽어서 채널, 소스, 싱크를 설정한다.
+			- 30초마다 설정파일을 로드한다.
+			- Flume의 재시작없이 워크플로우를 재설정할 수 있다.
+		- 소스
+			- 수집대상 데이터를 받아들이는 영역이다.
+			- 컨피그가 로드되면 데이터를 채널로 보낸다.
+			- 소스의 종류
+				Avro source : 경량 rpc 서버중 하나인 avro를 소스로 사용 
+				Thrift source : 경량 rpc 서버중 하나인 소걄를 소스로 사용
+				Exec source : 명령어를 수행하고 그 출력을 소스로 사용
+				JMS source : JMS를 소스로 사용
+				Spooling directory source : 특정 디렉토리에 새로운 파일이 생성될 때 이 파일을 전송할 있게하는 소스
+				Netcat source : netcat를 통해 네트워크 서버를 생성하고 네트워크 서버에 들어오는 입력을 소스로 사용
+				Sequence source : 1부터 순차적으로 번호를 발생시키는 소스
+		- 싱크
+			- 데이터를 저장하거나 전달하는 영역이다.
+			- 싱크의 종류
+				HDFS sink : hdfs를 이용해 데이터를 전송하거나 저장한다.
+				Logger sink : 자바의 로깅 시스템을 사용해 데이터를 출력한다.
+				Avro sink : 경량 rpc인 avro로 데이터를 전송한다.
+				Thrift sink : 경량 rpc인 thrift를 통해 데이터를 전송한다.
+				IRC sink : irc 서버로 데이터를 전송한다.
+				Hbase sink : Hbase로 데이터를 전송한다.
+				File Roll sink : 이벤트를 파일로 생성할 때 사용한다.
+				ElasticSearchSink : 이벤트를 elasticsink로 보낼 때 사용한다.
+		- 채널
+			- 소스와 싱크의 사이에서 상호 연동 기능을 지원한다.
+			- 어떤 채널을 선택하느냐에 따라서 이벤트 전달의 신뢰도가 영향을 받는다.
+			- 채널 종류
+				Memory channel : 소스에서 생성한 이벤트를 메모리에 저장하는 채널, 빠르게 이벤트를 전달, 안정성이 낮다.
+				JDBC channel : 데이터베이스에 이벤트를 저장하는 채널, 임베디드 데이터베이스 derby만 지원
+				File channel : 에이전트으 로컬 파일에 데이터를 저장, 안정성이 높다.
+	- 워크플로우 작성
+		- Flume을 작동하도록 하기위해 소스, 채널, 싱크를 묶어서 하나의 동작으로 정의하는 것이다.
+		- 작성예
+			### list the sources, sinks and channels for the agent
+			# agent		
+			<Agent>.sources = <Source>
+			<Agent>.sinks = <Sink>
+			<Agent>.channels = <Channe1> <Channel2>
+			### set channel for source
+			<Agent>.sources.<Source>.channels = <Channel1> <Channel2>
+			### set channel for sink
+			<Agent>.sinks.<Sink>.channel = <Channel1>
+	- 설치
+		- 다운로드
+			$ wget http://archive.apache.org/dist/flume/stable/apache-flume-x.x.x-bin.tar.gz
+		- 환경변수 등록
+			$ vi ~/.bashrc
+			export FLUME_HOME=/usr/local/hadoop-eco/apache-flume
+			export FLUME_CONF_DIR=/usr/local/hadoop-eco/apache-flume/conf
+		- conf/flume-nev.sh에 JAVA_HOME 추가
+			JAVA_HOME=자바설치경로
+
+	- 실행
+		- $ flume-ng agent
+		    --conf-file 속성파일	 		// 플룸 속성파일을 지정한다.
+                    --name 에이전트명 				// 에이전트를 정의한다.
+		    --conf $FLUME_HOME/conf 			// 환경설정과 같은 일반적인 설정의 위치를 지정한다.
+                    -Dflume.root.logger=INFO,console		// 로그 설정
+		

@@ -1,0 +1,165 @@
+MapReduce
+    - HDFS에 저장된 파일을 분산배치 분석을 할 수 있게 도와주는 프레임워크다.
+    - 개발자가 맵리듀스 프로그램 모델에 맞게 애플리케이션을 구현하면
+      데이터 전송, 분산처리, 내고장성 등의 복잡한 처리는 맵리듀스 프레임워크가 자동으로 처리한다.
+      
+    - 맵리듀스의 구성
+        - 맵
+            - 데이터를 변형(transformation)한다.
+            - (K1, V1) -> list(K2, V2)
+            - (K1, V1)으로 구성된 데이터를 입력받아서 가공,분류한 후 (K2, V2)로 구성된 목록을 출력한다.
+        - 리듀스
+            - 데이터를 집계(aggregation)한다.
+            - (K2, list(V2)) -> list(K3, V3) 
+            - K2로 그룹핑된 값의 목록을 입력받아서 집계 연산을 수행한 후 (K3, V3)로 구성된 목록을 출력한다.
+            
+    - API
+        - MapReduce 기본 데이터타입 클래스
+            - 맵리듀스 프레임워크는 기본자료형 및 기타 자료형에 대한 데이터타입 클래스를 제공한다.
+                - ArrayWritable (배열)
+                - BooleanWritable (Boolean)
+                - ByteWritable (Byte)
+                - DoubleWritable (Double)
+                - FloatWritable (Float)
+                - IntWritable (Int)
+                - LongWritable (Long)
+                - MapWritable (Map 객체)
+                - NullWritable (Null 객체, Key나 Value값에 지정할 객체가 없는 경우 사용한다.)
+                - Text (문자열)
+            - 모든 기본 테이터타입 클래스는 WritableComparable<T> 인터페이스를 구현한다.
+            - Writable 인터페이스는 직렬화 관련 write(DataOutput out), readFields(DataInput in)를 포함하고 있다.
+            - WritableComparable 인터페이스는 compareTo(Object o)를 포함하고 있다.
+            
+        - MapReduce Mapper 클래스
+            - Mapper 클래스의 주요 메소드
+                - void cleanup(Context context)
+                    - 맵 태스크가 종료될 때 한번 실행된다
+                - void map(K1 key, V1 value, Context context)
+                    - 각각의 key/value 작업을 처리할 때 마다 호출된다.
+                - void setup(Context context)
+                    - 맵 태스크가 시작될 때 한번 실행된다.
+                    
+        - MapReduce Reducer 클래스
+            - Reducer 클래스의 주요 메소드
+                - void cleanup(Context context)
+                    - 리듀스 태스크가 종료될 때 한번 실행된다.
+                - void reduce(K2 key, Iterable<V2> values, Context context)
+                    - 각각의 key에 대해 한번 씩 실행된다.
+                - void setup(Context context)
+                    - 리듀스 태스크가 시작될 때 한번 실행된다.
+                    
+        - MapReduce Job 클래스
+            - Job 클래스는 Map/Reduce 태스크를 정의하고 관리하는 역할을 수행한다.
+            - Job 클래스는 Map/Reduce 태스크의 입출력 타입, Mapper클래스, Reduce클래스 등을 지정한다.
+            - Job 클래스의 주요 메소드
+                - void setJobName(String name)
+                    - Job 이름을 지정한다.
+                - void setMapperClass(Mapper cls)
+                    - Mapper 클래스를 지정한다.
+                - void setReducerClass(Reducer cls)
+                    - Reducer 클래스를 지정한다.
+                - void setPartitionerClass(Partitioner cls)
+                    - Partitioner 클래스를 지정한다.
+                - void setInputFormatClass(InputFormat cls)
+                    - InputFormat 클래스를 지정한다.
+                - void setOutputFormatClass(OutputFormat cls)
+                    - OutputFormat 클래스를 지정한다.
+                - void setOutputKeyClass(Object cls)
+                    - 출력 데이터의 Key 클래스를 지정한다.
+                - void setOutputValueClass(Object cls)
+                    - 출력 데이터의 value 클래스를 지정한다.
+                - boolean waitForCompletion(boolean verbose)
+                    - Job을 실행한다. 성공할 때 까지 커서가 대기한다.
+        
+        - InputFormat 클래스
+            - Map/Reduce 클래스에서 읽어오는 Input 데이터의 형식을 지정한다.
+            - 주요 InputFormat 클래스
+                - TextInputFormat
+                    - 기본값이다.
+                    - 일반 텍스트 형식으로 값을 읽어온다.
+                    - 각 라인별로 문자열을 읽어온다.
+                    - key는 LongWritable, value는 Text 타입이다.
+                - KeyValueTextInputFormat
+                    - 텍스트를 key/value 값으로 읽어온다.
+                    - 구분자는 Configuration객체의 set 메소드를 사용해서 지정한다.
+                - NLineInputFormat
+                    - 맵 태스크에서 입려되는 라인 수를 제한하려 할 때 사용한다.
+                - SequenceFileInputFormat
+                    - 하둡의 고유파일 포맷인 시퀀스 파일 형식으로 값을 읽어올 때 사용된다.
+                    - 이 입력파일 포맷을 사용할 때 SequenceFileInputFormat 클래스의 addInputPath나 addInputPaths를 사용한다.
+                - MultipleInputs
+                    - Join과 같이 여러 갱의 입력을 필요로 할 때 사용한다.
+                    
+        - OutputFormat 클래스
+            - Map/Reduce 클래스에서 출력하는 output 데이터의 형식을 지정한다.
+            - 주요 OutputFormat 클래스
+                - TextOutputFormat
+                    - 태스크의 출력값을 일반 텍스트로 출력한다.
+                    - key와 value는 tab으로 구분한다.
+                - SequenceFileOutputFormat
+                    - 출력값을 Sequence 파일 형태로 출력한다.
+                - MapFileOutputFormat
+                    - 출력값을 Map 파일형태로 출력한다.
+                - MultipleOutputs
+                    - 다중 출력일 경우 사용되는 클래스다.
+                    
+    - 다중 출력
+        - 맵리듀스 프레임워크는 다중 출력을 지원한다.
+        - 맵이나 리듀스에서 출력을 할 때 사용자가 원하는 개수와 형식으로 여러 개의 출력 데이터를 생성할 수 있다.
+        - 다중 출력은 MultipleOutputs클래스를 사용한다.
+        - Driver 클래스에서 동일한 job을 매개변수로 MutipleOutputs의 
+          addNamedOutput(Job job, String outputName, Class outputFormat, Class key, Class value) 메소드를 사용해서 출력 경로를 설정한다.
+        - 맵함수나 리듀스함수에서는 MultipleOutputs의 write(String outputName, Class key, Class value)로 값을 출력한다.
+        
+    - 조인
+        - 맵리듀스 프레임워크는 서로 다른 두 개의 데이터를 조인할 수 있다.
+        - 두 개의 서로 다른 경로로부터 읽어온 데이터가 공통분모에 해당하는 동일한 키값을 가지고 있는 경우, 조인 연산을 수행할 수 있다.
+        - 여러 개의 Mapper에서 동일한 Key을 사용하는 <Key, Value>값들을 하나의 Reducer가 처리하게 함으로써 Mappper의 Value들이 조인될 수 있다.
+        - Mapper는 다중 입력으로 데이터를 가져오기 위해서 MultipleInputs 클래스를 사용한다.
+        - 예)
+            ---------------------------------------------------------------------------------------------------------
+            | 입력데이터1                          입력데이터2                                                            |
+            ---------------------------------------------------------------------------------------------------------
+                hong,홍길동                        1,hong,iphone
+                kim,김유신                         2,kim,macbook
+                                                 1,hong,ps4
+                                                 2,hong,nintendo
+                                                 1,hong,headset
+            
+            
+            ---------------------------------------------------------------------------------------------------------
+            | Mapper1의 출력                     Mapper2의 출력                                                         |
+            ---------------------------------------------------------------------------------------------------------
+                <hong, name_홍길동>            <hong, product_iphone>, <hong, product_ps4>, <hong, product_headset>
+                <kim, name_김유신>             <kim, product_macbook>, <kim, product_nintendo>
+            
+            
+            ---------------------------------------------------------------------------------------------------------
+            | Sorting & Shuffling 처리의 Reducer의 입력데이터                                                            |
+            ---------------------------------------------------------------------------------------------------------
+                <hong, [name_홍길동, product_iphone, product_ps4, product_headset]>
+                <kim, [name_김유신, product_macbook, product_nintendo]>
+                
+            ---------------------------------------------------------------------------------------------------------
+            | Reducer에서는 <Key, list(Values)> values에 대한 조인 연산을 수행해서 최종 결과를 만든다.                           |
+            ---------------------------------------------------------------------------------------------------------
+                <hong 홍길동, 3>
+                <kim 김유신, 2>
+                
+        - 멀티 매퍼와 리듀스
+            
+            
+            
+            
+            
+                
+            
+                
+                
+            
+            
+        
+        
+    
+    
+        
